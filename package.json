@@ -2,11 +2,12 @@
   "name": "heic-eval",
   "packageManager": "yarn@3.2.0",
   "private": true,
-  "workspaces": {
-    "packages": [
-      "packages/*"
-    ]
+  "scripts": {
+    "dev": "yarn workspaces foreach -tip run dev"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "devDependencies": {
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",

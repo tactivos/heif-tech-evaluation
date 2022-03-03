@@ -1,17 +1,9 @@
 {
   "name": "www",
-  "private": true,
   "version": "0.0.0",
-  "installConfig": {
-    "hoistingLimits": "workspaces"
-  },
-  "workspaces": {
-    "nohoist": [
-      "wasm-imagemagick"
-    ]
-  },
+  "packageManager": "yarn@3.2.0",
   "scripts": {
-    "start": "parcel ./src/index.html",
+    "dev": "parcel ./src/index.html",
     "build": "parcel build ./src/index.html"
   },
   "dependencies": {
