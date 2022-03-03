@@ -1,0 +1,124 @@
+:root {
+  --mural-pink: #f06;
+}
+
+.App {
+  display: grid;
+  height: 100vh;
+  width: 100vw;
+  grid-template-rows: 72px auto 16px;
+  grid-template-columns: 32rem auto;
+}
+
+.App__header {
+  border-bottom: #ddd thin solid;
+  display: grid;
+  justify-content: center;
+  align-content: center;
+  background: var(--mural-pink);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  grid-column: span 2;
+}
+
+.App__aside {
+  border-right: #ddd thin solid;
+  display: grid;
+  grid-template-rows: auto auto 999fr;
+  overflow: auto;
+  height: 100%;
+}
+
+.App__footer {
+  background: #434343;
+  grid-column: span 2;
+}
+
+.App__main {
+  overflow: auto;
+  gap: 1rem;
+  padding: 1rem;
+  margin: 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr));
+  align-content: flex-start;
+}
+
+.FileUpload {
+  display: grid;
+  align-content: flex-start;
+  padding: 1rem;
+  height: fit-content;
+}
+
+.FileUpload__label {
+  display: grid;
+  padding: 1rem;
+  background: #f4f4f4;
+  cursor: pointer;
+}
+.FileUpload__label:hover {
+  background: #efefef;
+}
+.FileUpload__label__text {
+  font-size: 2rem;
+}
+.FileUpload__label__img {}
+.FileUpload__label__input {}
+.FileUpload__submit {
+  padding: 1rem;
+  font-size: 2rem;
+}
+
+.FileInfo {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  width: 100%;
+  height: 32rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.FileInfo__name {
+  font-family: 'Courier New', Courier, monospace;
+  padding: 1rem;
+  background: #434343;
+  color: white;
+  display: grid;
+  gap: 0.5rem;
+}
+.FileInfo__img {
+  padding: 0.5rem;
+  background: #242424;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  overflow: hidden;
+}
+.FileInfo__img > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.Payload {
+  padding: 1rem;
+  background: #434343;
+  overflow: auto;
+  color: white;
+}
+.Payload > pre {}
+.Payload > pre > code {
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.FileToConvertInfo {
+  padding: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  border-top: #ddd thin solid;
+}
