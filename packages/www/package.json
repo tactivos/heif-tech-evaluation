@@ -12,6 +12,7 @@
     "bytes": "^3.1.2",
     "heic2any": "^0.0.3",
     "libheif-js": "^1.12.0",
+    "magica": "^0.2.17",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "wasm-imagemagick": "^1.2.8"

@@ -2,6 +2,7 @@ import './App.css'
 import { useState } from 'react'
 import hrtime from 'browser-process-hrtime'
 import bytes from "bytes"
+// import { IFile, main } from "magica"
 
 type Maybe<T> = T | undefined | null
 type FileInfo = {
@@ -13,14 +14,37 @@ type FileInfo = {
 
 const _formatHrTime = (delta: [number, number]) => `${(delta[0] / 1000) + (delta[1] / 1000000)} ms`
 
-const convertWithMagickWasm = async (file: File) => {
-  // const { initializeImageMagick, ImageMagick } = await import("@imagemagick/magick-wasm")
-  // const { Magick } = await import("@imagemagick/magick-wasm/magick")
-  // await initializeImageMagick()
-  // console.log(Magick.features)
-  // console.log(Magick.delegates)
-  // console.log(Magick.imageMagickVersion)
-}
+// const convertWithMagickWasm = async (file: File) => {
+//   // const { initializeImageMagick } = await import("@imagemagick/magick-wasm")
+//   // const { Magick } = await import("@imagemagick/magick-wasm/magick")
+//   // await initializeImageMagick()
+//   // console.log(Magick.features)
+//   // console.log(Magick.delegates)
+//   // console.log(Magick.imageMagickVersion)
+// }
+
+// const convertWithMagica = async (file: File) => {
+//   const fileBuffer = await file.arrayBuffer()
+//   const inputFile: IFile = {
+//     content: new Uint8ClampedArray(fileBuffer),
+//     name: file.name
+//   }
+//   console.log({ inputFile })
+//   const result = await main({
+//     debug: true,
+//     command: 'convert input.heif output.jpeg',
+//     inputFiles: [inputFile],
+//   })
+
+//   console.log({ result })
+
+//   // const url = `data:image/png;base64,${btoa(String.fromCharCode(...result.))}`
+
+//   return {
+//   }
+
+
+// }
 
 const convertWithHeic2Any = async (file: File, ext: string = "jpeg"): Promise<FileInfo> => {
   const heic2any = await import("heic2any") as any
@@ -79,6 +103,9 @@ function App() {
       setConvertedFiles(data)
       setIsLoading(false)
 
+      // convertWithMagickWasm(fileToConvert)
+      // convertWithMagica(fileToConvert)
+
       // const Magick = await import('./lib//magickApi.js')
       // const url = URL.createObjectURL(fileToConvert)
       // const fileName = fileToConvert.name
@@ -123,7 +150,7 @@ function App() {
             <input className="FileUpload__label__input" type="file" name="" id="" onChange={handleFileChange} />
           </label>
           <button className="FileUpload__submit" type="submit" disabled={!fileToConvert || isLoading}>
-            { isLoading ? 'Converting...' : 'Convert' }
+            { isLoading ? '⚙️ Converting...' : '🪄 Convert' }
           </button>
         </form>
         {
@@ -141,7 +168,7 @@ function App() {
             {
               isLoading ? (
                 <>
-                  <h2>Loading...</h2>
+                  <h2>⏳ Loading...</h2>
                   <p>This will take a while...</p>
                 </>
               ) : (
@@ -159,7 +186,7 @@ function App() {
         {
           isLoading && (
             <div>
-              <h2>Loading...</h2>
+              <h2>⏳ Loading...</h2>
               <p>This will take a while...</p>
             </div>
           )
@@ -181,7 +208,7 @@ function App() {
             <p>Name: {file.name}</p>
             <p>Time: {file.time}</p>
             <p>Size: {file?.size}</p>
-            <p>Size Delta: { deltaFormatted } => { (deltaPercentage + 1).toFixed(4) }x larger than original</p>
+            <p>Size Delta: { deltaFormatted } ➡️ { (deltaPercentage + 1).toFixed(4) }x larger than original</p>
           </div>
           <div className="FileInfo__img">
             <img src={file.url} alt="" />

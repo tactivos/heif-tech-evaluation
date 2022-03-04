@@ -119,7 +119,7 @@ app.post(`/api/v1/convert`, async (req, res) => {
         hash,
         uploadsDir,
         name: 'heic-convert',
-        ext: 'png',
+        ext: 'jpeg',
         callback: () => convert({
           buffer: originalFile.data,
           format: 'JPEG'
