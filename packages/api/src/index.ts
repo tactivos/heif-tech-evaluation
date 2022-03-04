@@ -1,11 +1,71 @@
 import express from 'express'
+import { nanoid } from 'nanoid'
+import { execSync } from "child_process"
 import cors from "cors"
 import fileUpload from "express-fileupload"
-import { nanoid } from 'nanoid'
 import convert from 'heic-convert'
 import fs from "fs/promises"
-import { execSync } from "child_process"
 import path from 'path'
+import bytes from 'bytes'
+
+type RunCommandResult<T> = {
+  data: T,
+  meta: {
+    name: string,
+    path: string,
+    url: string
+    time: string,
+    size: string
+  }
+}
+
+type RunCommandCallbackOpts = {
+  name: string,
+  path: string,
+  url: string
+}
+
+type RunCommandOpts<T> = {
+  hash: string,
+  callback: (meta: RunCommandCallbackOpts) => T,
+  after?: (meta: RunCommandCallbackOpts, data?: T) => void | Promise<void>
+  name: string,
+  ext: string,
+  uploadsDir: string
+}
+
+const _formatHrTime = (delta: [number, number]) => `${(delta[0] / 1000) + (delta[1] / 1000000)} ms`
+
+async function runCommand<T>(opts: RunCommandOpts<T>): Promise<RunCommandResult<T>> {
+  try {
+    const filename = `${opts.hash}.${opts.name}.${opts.ext}`
+    const uploadsPath = `${opts.uploadsDir}/${filename}`
+    const staticUrl = `http://localhost:3001/uploads/${filename}`
+    const startTime = process.hrtime()
+    const meta = {
+      name: filename,
+      path: uploadsPath,
+      url: staticUrl
+    }
+    const data = await opts.callback(meta)
+    const delta = process.hrtime(startTime)
+    const afterCallback = opts.after ?? function () { }
+    await afterCallback(meta, data)
+    const stats = await fs.stat(meta.path)
+    const size = bytes(stats.size, { unit: "kb", unitSeparator: " " })
+    return {
+      data,
+      meta: {
+        time: _formatHrTime(delta),
+        ...meta,
+        size
+      }
+    }
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
 
 const app = express()
 
@@ -15,14 +75,8 @@ app.use(fileUpload({
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-const uploadsPath = path.join(__dirname, "../uploads")
-app.use('/uploads', express.static(uploadsPath))
-
-const FileInfo = (hash: string) => (name: string, ext: string = "png") => ({
-  name: `${hash}.${name}.${ext}`,
-  path: `${uploadsPath}/${hash}.${name}.${ext}`,
-  url: `http://localhost:3001/uploads/${hash}.${name}.${ext}`
-})
+const uploadsDir = path.join(__dirname, "../uploads")
+app.use('/uploads', express.static(uploadsDir))
 
 app.post(`/api/v1/convert`, async (req, res) => {
   if (!req.files) {
@@ -33,61 +87,102 @@ app.post(`/api/v1/convert`, async (req, res) => {
     const image = req.files.image
     if (!Array.isArray(image)) {
       const hash = nanoid(4)
-      const getFileInfo = FileInfo(hash)
-      const originalFileInfo = getFileInfo('original', 'heif')
-      await image?.mv(originalFileInfo.path)
-      const inputBuffer = image.data
 
-      const getFormattedTime = (data: [number, number]) => {
-        return `${data[0]}s ${data[1] / 1000000}ms`
-      }
+      // original
+
+      const originalFile: RunCommandResult<Buffer> = await runCommand<Buffer>({
+        hash,
+        uploadsDir,
+        name: 'original',
+        ext: 'heif',
+        callback: () => image.data,
+        after: (meta) => image?.mv(meta.path)
+      })
 
       // heic-convert - png
-      const heicConvertTimerStart = process.hrtime()
-      const heicConvertOutput = await convert({
-        buffer: inputBuffer,
-        format: 'PNG'
-      })
-      const heicConvertTimerEnd = process.hrtime(heicConvertTimerStart)
-      const heicConvertInfo = getFileInfo("heic-convert")
-      await fs.writeFile(heicConvertInfo.path, heicConvertOutput)
-      
-      // heic-convert - jpeg
-      const heicConvertJpegTimerStart = process.hrtime()
-      const heicConvertJpegOutput = await convert({
-        buffer: inputBuffer,
-        format: 'JPEG'
-      })
-      const heicConvertJpegTimerEnd = process.hrtime(heicConvertJpegTimerStart)
-      const heicConvertJpegInfo = getFileInfo("heic-convert", "jpg")
-      await fs.writeFile(heicConvertJpegInfo.path, heicConvertJpegOutput)
 
-      // image magick
-      const imagemagickInfo = getFileInfo("image-magick", "jpg")
-      const imagemagickTimerStart = process.hrtime()
-      execSync(`convert ${originalFileInfo.path} ${imagemagickInfo.path}`)
-      const imagemagickTimerEnd = process.hrtime(imagemagickTimerStart)
+      const heicConvertPng: RunCommandResult<any> = await runCommand<any>({
+        hash,
+        uploadsDir,
+        name: 'heic-convert',
+        ext: 'png',
+        callback: () => convert({
+          buffer: originalFile.data,
+          format: 'PNG'
+        }),
+        after: (meta, data) => fs.writeFile(meta.path, data)
+      })
+
+      // heic-convert - jpeg 
+
+      const heicConvertJpeg: RunCommandResult<any> = await runCommand<any>({
+        hash,
+        uploadsDir,
+        name: 'heic-convert',
+        ext: 'png',
+        callback: () => convert({
+          buffer: originalFile.data,
+          format: 'JPEG'
+        }),
+        after: (meta, data) => fs.writeFile(meta.path, data)
+      })
+
+      // image magick - jpg
+
+      const imageMagickJpg = await runCommand<any>({
+        hash,
+        uploadsDir,
+        name: 'image-magick',
+        ext: 'jpg',
+        callback: (meta) => execSync(`convert ${originalFile.meta.path} ${meta.path}`)
+      })
 
       // image magick - png
-      const imagemagickPngInfo = getFileInfo("image-magick", "png")
-      const imagemagickPngTimerStart = process.hrtime()
-      execSync(`convert ${originalFileInfo.path} ${imagemagickPngInfo.path}`)
-      const imagemagickPngTimerEnd = process.hrtime(imagemagickPngTimerStart)
+
+      const imageMagickPng = await runCommand<any>({
+        hash,
+        uploadsDir,
+        name: 'image-magick',
+        ext: 'png',
+        callback: (meta) => execSync(`convert ${originalFile.meta.path} ${meta.path}`)
+      })
+
+      // heic-cli - png
+
+      const heicCliPng = await runCommand<any>({
+        hash,
+        uploadsDir,
+        name: 'heic-cli',
+        ext: 'png',
+        callback: meta => execSync(`yarn exec heic-cli < ${originalFile.meta.path} > ${meta.path}`)
+      })
+
+      // heic-cli - jpg 
+
+      const heicCliJpg = await runCommand<any>({
+        hash,
+        uploadsDir,
+        name: 'heic-cli',
+        ext: 'jpg',
+        callback: meta => execSync(`yarn exec heic-cli < ${originalFile.meta.path} > ${meta.path}`)
+      })
 
       // response
       res.json([
-        originalFileInfo,
-        { ...heicConvertInfo, time: getFormattedTime(heicConvertTimerEnd) },
-        { ...heicConvertJpegInfo, time: getFormattedTime(heicConvertJpegTimerEnd) },
-        { ...imagemagickInfo, time: getFormattedTime(imagemagickTimerEnd) },
-        { ...imagemagickPngInfo, time: getFormattedTime(imagemagickPngTimerEnd) }
+        originalFile.meta,
+        heicConvertPng.meta,
+        heicConvertJpeg.meta,
+        imageMagickPng.meta,
+        imageMagickJpg.meta,
+        heicCliPng.meta,
+        heicCliJpg.meta,
       ])
-
     }
   }
 })
 
 
 app.listen("3001", () => {
-  console.log("test")
+  console.log("API Server running on port 3001")
 })
+

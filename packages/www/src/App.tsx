@@ -1,16 +1,17 @@
 import './App.css'
 import { useState } from 'react'
-import hrtime from 'browser-process-hrtime
+import hrtime from 'browser-process-hrtime'
 import bytes from "bytes"
 
 type Maybe<T> = T | undefined | null
 type FileInfo = {
   url: string,
   name: string,
-  time?: string
+  time?: string,
+  size?: string,
 }
 
-const _formatHrTime = (delta: [number, number]) => `${delta[0]}s ${delta[1] / 1000000}ms`
+const _formatHrTime = (delta: [number, number]) => `${(delta[0] / 1000) + (delta[1] / 1000000)} ms`
 
 const convertWithMagickWasm = async (file: File) => {
   // const { initializeImageMagick, ImageMagick } = await import("@imagemagick/magick-wasm")
@@ -22,19 +23,21 @@ const convertWithMagickWasm = async (file: File) => {
 }
 
 const convertWithHeic2Any = async (file: File, ext: string = "jpeg"): Promise<FileInfo> => {
-  const heic2any = await import("heic2any")
+  const heic2any = await import("heic2any") as any
   const url = URL.createObjectURL(file)
-  const blob =  await fetch(url).then(res => res.blob())
-  
+  const blob = await fetch(url).then(res => res.blob())
+
   const startTime = hrtime()
   const result = await heic2any({ blob, toType: `image/${ext}` })
   const delta = hrtime(startTime)
 
   const resultUrl = URL.createObjectURL(result as Blob)
+  const resultBlob = await fetch(resultUrl).then(res => res.blob())
   return {
     url: resultUrl,
     name: `local.heic2any.${ext}`,
-    time: _formatHrTime(delta)
+    time: _formatHrTime(delta),
+    size: bytes(resultBlob.size, { unit: 'kb', unitSeparator: ' ' })
   }
 
 }
@@ -62,7 +65,10 @@ function App() {
       let data = await fetch("http://localhost:3001/api/v1/convert", {
         method: 'POST',
         body: formData
-      }).then(res => res.json())
+      }).then(res => res.json()).catch((error) => {
+        setIsLoading(false)
+        console.error(error)
+      })
 
       data = [
         ...data,
@@ -108,16 +114,17 @@ function App() {
   return (
     <div className="App">
       <header className="App__header">
-        <h1>.HEIF Conversion</h1>
+        <h1>.HEIF Tech Evaluation</h1>
       </header>
       <aside className='App__aside'>
         <form className="FileUpload" onSubmit={handleSubmit}>
           <label className="FileUpload__label">
             <span className="FileUpload__label__text">Upload file</span>
-            <img className="FileUpload__label__img" />
             <input className="FileUpload__label__input" type="file" name="" id="" onChange={handleFileChange} />
           </label>
-          <button className="FileUpload__submit" type="submit">Convert</button>
+          <button className="FileUpload__submit" type="submit" disabled={!fileToConvert || isLoading}>
+            { isLoading ? 'Converting...' : 'Convert' }
+          </button>
         </form>
         {
           fileToConvert && (
@@ -130,22 +137,22 @@ function App() {
           )
         }
         {
-        <div className="Payload">
-          {
-          isLoading ? (
-            <>
-            <h2>Loading...</h2>
-            <p>This will take a while...</p>
-            </>
-          ) : (
-          <pre>
-            <code>
-              {convertedFiles && JSON.stringify(convertedFiles, null, 2)}
-            </code>
-          </pre>
-          )
-          }
-        </div>
+          <div className="Payload">
+            {
+              isLoading ? (
+                <>
+                  <h2>Loading...</h2>
+                  <p>This will take a while...</p>
+                </>
+              ) : (
+                <pre>
+                  <code>
+                    {convertedFiles && JSON.stringify(convertedFiles, null, 2)}
+                  </code>
+                </pre>
+              )
+            }
+          </div>
         }
       </aside>
       <main className="App__main">
@@ -159,17 +166,28 @@ function App() {
         }
         {
           !isLoading && convertedFiles?.map(file => {
+            const delta = file.size ? bytes(file?.size) - (fileToConvert?.size ?? 0) : 0
+            const deltaPercentage = file.size ? delta / (fileToConvert?.size || 1) : 0
+            const deltaFormatted = file.size ? bytes(
+              delta,
+              {
+                unit: "kb",
+                unitSeparator: " "
+              }
+            ) : "n/a"
             return (
-              <div className="FileInfo" key={file.name}>
-                <div className="FileInfo__name">
-                  <h2>{file.name}</h2>
-                  <p>{file.time}</p>
-                </div>
-                <div className="FileInfo__img">
-                  <img src={file.url} alt="" />
-                </div>
-              </div>
-            )
+        <div className="FileInfo" key={file.name}>
+          <div className="FileInfo__name">
+            <p>Name: {file.name}</p>
+            <p>Time: {file.time}</p>
+            <p>Size: {file?.size}</p>
+            <p>Size Delta: { deltaFormatted } => { (deltaPercentage + 1).toFixed(4) }x larger than original</p>
+          </div>
+          <div className="FileInfo__img">
+            <img src={file.url} alt="" />
+          </div>
+        </div>
+        )
           })
         }
       </main>

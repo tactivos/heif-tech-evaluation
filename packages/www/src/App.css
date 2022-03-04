@@ -1,5 +1,28 @@
 :root {
-  --mural-pink: #f06;
+  --mural-pink--base: 336, 100%;
+  --gray--base: 0, 0%;
+  --l: 50%;
+
+  --mural-pink--100: hsl(var(--mural-pink--base), calc(var(--l) + 40%));
+  --mural-pink--200: hsl(var(--mural-pink--base), calc(var(--l) + 30%));
+  --mural-pink--300: hsl(var(--mural-pink--base), calc(var(--l) + 20%));
+  --mural-pink--400: hsl(var(--mural-pink--base), calc(var(--l) + 10%));
+  --mural-pink--500: hsl(var(--mural-pink--base), var(--l));
+  --mural-pink--600: hsl(var(--mural-pink--base), calc(var(--l) - 10%));
+  --mural-pink--700: hsl(var(--mural-pink--base), calc(var(--l) - 20%));
+  --mural-pink--800: hsl(var(--mural-pink--base), calc(var(--l) - 30%));
+  --mural-pink--900: hsl(var(--mural-pink--base), calc(var(--l) - 40%));
+
+  --gray--100: hsl(var(--gray--base), calc(var(--l) + 40%));
+  --gray--200: hsl(var(--gray--base), calc(var(--l) + 30%));
+  --gray--300: hsl(var(--gray--base), calc(var(--l) + 20%));
+  --gray--400: hsl(var(--gray--base), calc(var(--l) + 10%));
+  --gray--500: hsl(var(--gray--base), var(--l));
+  --gray--600: hsl(var(--gray--base), calc(var(--l) - 10%));
+  --gray--700: hsl(var(--gray--base), calc(var(--l) - 20%));
+  --gray--800: hsl(var(--gray--base), calc(var(--l) - 30%));
+  --gray--900: hsl(var(--gray--base), calc(var(--l) - 40%));
+
 }
 
 .App {
@@ -11,11 +34,11 @@
 }
 
 .App__header {
-  border-bottom: #ddd thin solid;
+  border-bottom: var(--gray--300) thin solid;
   display: grid;
   justify-content: center;
   align-content: center;
-  background: var(--mural-pink);
+  background: var(--mural-pink--500);
   color: white;
   text-transform: uppercase;
   letter-spacing: 0.05rem;
@@ -23,7 +46,7 @@
 }
 
 .App__aside {
-  border-right: #ddd thin solid;
+  border-right: var(--gray--300) thin solid;
   display: grid;
   grid-template-rows: auto auto 999fr;
   overflow: auto;
@@ -31,7 +54,7 @@
 }
 
 .App__footer {
-  background: #434343;
+  background: var(--gray--800);
   grid-column: span 2;
 }
 
@@ -56,20 +79,37 @@
 .FileUpload__label {
   display: grid;
   padding: 1rem;
-  background: #f4f4f4;
+  background: var(--gray--100);
   cursor: pointer;
 }
 .FileUpload__label:hover {
-  background: #efefef;
+  background: var(--gray--200);
 }
 .FileUpload__label__text {
   font-size: 2rem;
+  cursor: pointer;
 }
 .FileUpload__label__img {}
-.FileUpload__label__input {}
+.FileUpload__label__input {
+  cursor: pointer;
+}
 .FileUpload__submit {
   padding: 1rem;
   font-size: 2rem;
+  background: var(--mural-pink--500);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  border: none;
+  cursor: pointer;
+}
+.FileUpload__submit:hover, .FileUpload__submit:focus {
+  background: var(--mural-pink--700);
+}
+
+.FileUpload__submit:disabled {
+  background: var(--gray--300);
+  cursor: not-allowed;
 }
 
 .FileInfo {
@@ -91,7 +131,7 @@
 }
 .FileInfo__img {
   padding: 0.5rem;
-  background: #242424;
+  background: var(--gray--800);
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -120,5 +160,5 @@
   padding: 1rem;
   display: grid;
   gap: 0.5rem;
-  border-top: #ddd thin solid;
+  border-top: var(--gray--300) thin solid;
 }
