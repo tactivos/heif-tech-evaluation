@@ -147,10 +147,10 @@ function App() {
         <form className="FileUpload" onSubmit={handleSubmit}>
           <label className="FileUpload__label">
             <span className="FileUpload__label__text">Upload file</span>
-            <input className="FileUpload__label__input" type="file" name="" id="" onChange={handleFileChange} />
+            <input className="FileUpload__label__input" type="file" name="" id="" onChange={handleFileChange} accept="image/heic,image/heif" />
           </label>
           <button className="FileUpload__submit" type="submit" disabled={!fileToConvert || isLoading}>
-            { isLoading ? '⚙️ Converting...' : '🪄 Convert' }
+            { isLoading ? '🚀 Converting...' : '🪄 Convert' }
           </button>
         </form>
         {
